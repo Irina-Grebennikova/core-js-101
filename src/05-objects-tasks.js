@@ -120,49 +120,50 @@ class Selector {
     this.hasTag = !(/[#.[:]/.test(string));
     this.hasPseudoEl = string.includes('::');
     this.hasId = string.includes('#');
+    this.repeatError = 'Element, id and pseudo-element should not occur more then one time inside the selector';
+  }
+
+  static validateOrder(regexp, presence) {
+    if (presence) throw new Error(this.repeatError);
+    if (!regexp) return;
+    const isWrongOrder = regexp.test(this.string);
+    if (isWrongOrder) throw new Error('Selector parts should be arranged in the following order: element, id, class, attribute, pseudo-class, pseudo-element');
   }
 
   element(value) {
-    const isWrongOrder = /[#.[:]/.test(this.string);
-    if (this.hasTag) throw new Error('Element, id and pseudo-element should not occur more then one time inside the selector');
-    if (isWrongOrder) throw new Error('Selector parts should be arranged in the following order: element, id, class, attribute, pseudo-class, pseudo-element');
+    Selector.validateOrder.call(this, /[#.[:]/, this.hasTag);
     this.hasTag = true;
     this.string += value;
     return this;
   }
 
   id(value) {
-    const isWrongOrder = /[.[:]/.test(this.string);
-    if (this.hasId) throw new Error('Element, id and pseudo-element should not occur more then one time inside the selector');
-    if (isWrongOrder) throw new Error('Selector parts should be arranged in the following order: element, id, class, attribute, pseudo-class, pseudo-element');
+    Selector.validateOrder.call(this, /[.[:]/, this.hasId);
     this.hasId = true;
     this.string += `#${value}`;
     return this;
   }
 
   class(value) {
-    const isWrongOrder = /[[:]/.test(this.string);
-    if (isWrongOrder) throw new Error('Selector parts should be arranged in the following order: element, id, class, attribute, pseudo-class, pseudo-element');
+    Selector.validateOrder.call(this, /[[:]/);
     this.string += `.${value}`;
     return this;
   }
 
   attr(value) {
-    const isWrongOrder = /:/.test(this.string);
-    if (isWrongOrder) throw new Error('Selector parts should be arranged in the following order: element, id, class, attribute, pseudo-class, pseudo-element');
+    Selector.validateOrder.call(this, /:/);
     this.string += `[${value}]`;
     return this;
   }
 
   pseudoClass(value) {
-    const isWrongOrder = /::/.test(this.string);
-    if (isWrongOrder) throw new Error('Selector parts should be arranged in the following order: element, id, class, attribute, pseudo-class, pseudo-element');
+    Selector.validateOrder.call(this, /::/);
     this.string += `:${value}`;
     return this;
   }
 
   pseudoElement(value) {
-    if (this.hasPseudoEl) throw new Error('Element, id and pseudo-element should not occur more then one time inside the selector');
+    Selector.validateOrder.call(this, null, this.hasPseudoEl);
     this.hasPseudoEl = true;
     this.string += `::${value}`;
     return this;
